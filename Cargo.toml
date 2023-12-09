@@ -4,7 +4,7 @@ version = "0.0.0"
 authors = ["TOETOE55 <584605539@qq.com>"]
 description = "Marcos to structify unit-like enum with discriminants"
 keywords = ["template", "proc_macro", "procmacro", "enum"]
-edition = "2018"
+edition = "2021"
 
 [lib]
 proc-macro = true
