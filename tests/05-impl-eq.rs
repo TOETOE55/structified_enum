@@ -2,7 +2,10 @@ use structified_enum::structify;
 
 #[structify]
 #[derive(PartialEq, Eq, Debug)]
-enum Foo { A, B }
+enum Foo {
+    A,
+    B,
+}
 
 #[test]
 fn test_pattern_match() {

@@ -23,7 +23,6 @@ enum U8Repr {
 
 const _: u8 = U8Repr::A.value();
 
-
 #[structify]
 #[repr(i16)]
 enum I16Repr {
@@ -106,6 +105,8 @@ const _: usize = UsizeRepr::A.value();
 
 #[structify]
 #[repr(C, i32)]
-enum Repr { A }
+enum Repr {
+    A,
+}
 
 fn main() {}

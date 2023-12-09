@@ -5,7 +5,7 @@ enum ImplicitDiscriminant {
     A,
     B,
     C,
-    D
+    D,
 }
 
 #[test]

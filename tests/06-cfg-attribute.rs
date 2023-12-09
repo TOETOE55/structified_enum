@@ -8,7 +8,7 @@ use structified_enum::structify;
 enum Foo {
     #[cfg(any(test, not(test)))]
     A,
-    B
+    B,
 }
 
 fn main() {}

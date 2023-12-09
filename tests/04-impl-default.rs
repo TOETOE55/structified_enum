@@ -6,11 +6,15 @@ enum Empty {}
 
 #[structify]
 #[derive(Default)]
-enum Zero { A }
+enum Zero {
+    A,
+}
 
 #[structify]
 #[derive(Default)]
-enum Neg1 { A = -1 }
+enum Neg1 {
+    A = -1,
+}
 
 #[test]
 fn test_impl_default() {

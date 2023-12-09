@@ -1,7 +1,7 @@
 #![doc = include_str!("../README.md")]
 
 use proc_macro2::TokenStream;
-use quote::ToTokens;
+use quote::{quote, ToTokens};
 use std::collections::HashMap;
 
 use syn::punctuated::Punctuated;
@@ -35,9 +35,11 @@ fn structify_impl(r#enum: syn::ItemEnum) -> syn::Result<TokenStream> {
 
     let struct_item = structify_type(&reprs, &derives, &vis, &enum_name, &repr_ty);
     let inherent_impl = inherent_impl(&enum_name, &repr_ty, &variant_values);
+    let from_impl = from_impl(&enum_name, &repr_ty);
 
     struct_item.to_tokens(&mut token_stream);
     inherent_impl.to_tokens(&mut token_stream);
+    from_impl.to_tokens(&mut token_stream);
 
     if derive_debug {
         let debug_impl = debug_impl(&enum_name, &variant_values);
@@ -147,7 +149,10 @@ fn repr_ty(reprs: Vec<syn::Meta>) -> syn::Result<(syn::Path, Vec<syn::Meta>)> {
                 }
                 continue;
             } else {
-                return Err(syn::Error::new(path.span(), "conflicting representation hints"));
+                return Err(syn::Error::new(
+                    path.span(),
+                    "conflicting representation hints",
+                ));
             }
         }
 
@@ -277,6 +282,22 @@ fn default_impl(enum_name: &syn::Ident, default_value: &syn::Expr) -> syn::ItemI
         impl ::core::default::Default for #enum_name {
             fn default() -> Self {
                 Self(#default_value)
+            }
+        }
+    }
+}
+
+fn from_impl(enum_name: &syn::Ident, repr_ty: &syn::Path) -> TokenStream {
+    quote! {
+        impl ::core::convert::From<#repr_ty> for #enum_name {
+            fn from(value: #repr_ty) -> Self {
+                Self(value)
+            }
+        }
+
+        impl ::core::convert::From<#enum_name> for #repr_ty {
+            fn from(value: #enum_name) -> Self {
+                value.value()
             }
         }
     }
