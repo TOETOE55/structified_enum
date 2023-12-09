@@ -1,0 +1,5 @@
+error: expected `enum`
+ --> tests/failed/06-unsupported-type.rs:4:1
+  |
+4 | struct Foo;
+  | ^^^^^^

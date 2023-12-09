@@ -1,0 +1,11 @@
+error: unsupported attribute
+ --> tests/failed/03-unsupported-attribute.rs:4:1
+  |
+4 | #[other_attr]
+  | ^
+
+error: unsupported attribute
+ --> tests/failed/03-unsupported-attribute.rs:9:5
+  |
+9 |     #[other_attr]
+  |     ^
