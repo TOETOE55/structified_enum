@@ -1,0 +1,12 @@
+error[E0081]: discriminant value `2` assigned more than once
+ --> tests/failed/07-discriminant.rs:4:1
+  |
+4 | enum Foo {
+  | ^^^^^^^^
+5 |     A = 2,
+  |         - `2` assigned here
+6 |     B = 0,
+  |     - discriminant for `D` incremented from this startpoint (`B` + 2 variants later => `D` = 2)
+7 |     C,
+8 |     D,
+  |     - `2` assigned here

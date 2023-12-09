@@ -23,6 +23,7 @@ pub fn structify(
 }
 
 fn structify_impl(r#enum: syn::ItemEnum) -> syn::Result<TokenStream> {
+    let enum_clone = r#enum.clone();
     let (reprs, derives, derive_debug, derive_default) = repr_derive(r#enum.attrs)?;
     let (repr_ty, reprs) = repr_ty(reprs)?;
 
@@ -36,10 +37,12 @@ fn structify_impl(r#enum: syn::ItemEnum) -> syn::Result<TokenStream> {
     let struct_item = structify_type(&reprs, &derives, &vis, &enum_name, &repr_ty);
     let inherent_impl = inherent_impl(&enum_name, &repr_ty, &variant_values);
     let from_impl = from_impl(&enum_name, &repr_ty);
+    let phantom_enum = phantom_enum(enum_clone);
 
     struct_item.to_tokens(&mut token_stream);
     inherent_impl.to_tokens(&mut token_stream);
     from_impl.to_tokens(&mut token_stream);
+    phantom_enum.to_tokens(&mut token_stream);
 
     if derive_debug {
         let debug_impl = debug_impl(&enum_name, &variant_values);
@@ -300,5 +303,19 @@ fn from_impl(enum_name: &syn::Ident, repr_ty: &syn::Path) -> TokenStream {
                 value.value()
             }
         }
+    }
+}
+
+// to check discriminant is as enum itself.
+fn phantom_enum(mut r#enum: syn::ItemEnum) -> TokenStream {
+    r#enum.attrs.clear();
+    for v in r#enum.variants.iter_mut() {
+        v.attrs.clear();
+    }
+
+    quote! {
+        const _: () = {
+            #r#enum
+        };
     }
 }
