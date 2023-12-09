@@ -1,0 +1,18 @@
+[package]
+name = "structified_enum"
+version = "0.0.0"
+authors = ["TOETOE55 <584605539@qq.com>"]
+description = "Marcos to structify unit-like enum with discriminants"
+keywords = ["template", "proc_macro", "procmacro", "enum"]
+edition = "2018"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+quote = "1"
+proc-macro2 = "1.0"
+syn = { version = "2.0", features = ["full", "extra-traits"] }
+
+[dev-dependencies]
+trybuild = "1.0"
