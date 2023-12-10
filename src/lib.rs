@@ -9,8 +9,58 @@ use syn::spanned::Spanned;
 
 use syn::{parse_macro_input, parse_quote, Token};
 
-/// # TODO
-// `#[structify] #[repr()] #[derive()] enum Foo {..}`
+///
+/// transforming a unit-like enum to a struct with its discriminant.
+///
+/// # Example
+///
+/// ```rust
+/// use structified_enum::structify;
+///
+/// #[structify]
+/// #[repr(u8)]
+/// #[derive(Copy, Clone)]
+/// enum Foo {
+///     A = 0,
+///     B,
+///     C,
+/// }
+/// ```
+///
+/// is equivalent to
+///
+/// ```rust
+/// // #[repr(ty)] -> #[repr(transparent)]
+/// #[repr(transparent)]
+/// #[derive(Copy, Clone)]
+/// struct Foo(u8);
+///
+/// impl Foo {
+///     pub const A: Self = Self(0);
+///     pub const B: Self = Self(1);
+///     pub const C: Self = Self(2);
+///
+///     pub fn new(value: u8) -> Self {
+///         Self(value)
+///     }
+///
+///     // like `Foo::A as u8`
+///     pub fn value(self) -> u8 {
+///         self.0
+///     }
+/// }
+/// ```
+///
+/// # Rules
+///
+/// 1. `#[structify]` can only be followed by `#[repr]` or `#[derive]`; other attributes are not supported on variants except `#[cfg]`.
+/// 2. `#[repr(ty)]` will be converted to `#[repr(transparent)]`.
+/// 3. If `#[repr(ty)]` is not applied, the default type of the discriminant is `i32`, and there is no `#[repr(transparent)]`.
+/// 4. `#[derive]` only supports `Clone`, `Copy`, `PartialEq`, `Eq`, `PartialOrd`, `Ord`, `Hash`, `Default`, `Debug`.
+/// 5. For `#[derive(Debug)]`, unknown values will be displayed as `"EnumName(value)"`.
+/// 6. The `From` trait has been implemented for mutual conversions.
+/// 7. Other rules basically maintain consistency with `enum` itself.
+///
 #[proc_macro_attribute]
 pub fn structify(
     _: proc_macro::TokenStream,
@@ -197,7 +247,7 @@ fn variants(
 
         if default_value.is_none() {
             let v_name = v.ident.clone();
-            default_value = Some(parse_quote!(Self:: #v_name.value()));
+            default_value = Some(parse_quote!(Self:: #v_name.0));
         }
         variant_values.insert(v.ident, value.clone());
         value = parse_quote! { #value + 1 };
@@ -245,7 +295,7 @@ fn inherent_impl(
                 Self(value)
             }
 
-            pub const fn value(&self) -> #repr_ty {
+            pub const fn value(self) -> #repr_ty {
                 self.0
             }
         }
@@ -260,7 +310,7 @@ fn debug_impl(
         .keys()
         .map(|v_name| {
             parse_quote! {
-                if self.value() == Self:: #v_name.value() {
+                if self.0 == Self:: #v_name.0 {
                     return f.debug_struct(stringify!(#v_name)).finish();
                 }
             }
@@ -300,7 +350,7 @@ fn from_impl(enum_name: &syn::Ident, repr_ty: &syn::Path) -> TokenStream {
 
         impl ::core::convert::From<#enum_name> for #repr_ty {
             fn from(value: #enum_name) -> Self {
-                value.value()
+                value.0
             }
         }
     }
