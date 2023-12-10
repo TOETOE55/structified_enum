@@ -1,4 +1,4 @@
-error: unsupported attribute
+error: unsupported attribute. It only supports `#[repr]` and `#[derive]`
  --> tests/failed/03-unsupported-attribute.rs:4:1
   |
 4 | #[other_attr]

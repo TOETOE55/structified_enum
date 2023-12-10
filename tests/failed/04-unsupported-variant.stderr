@@ -1,10 +1,10 @@
-error: unsupported variant
+error: unsupported variant. It only supports unit variant
  --> tests/failed/04-unsupported-variant.rs:5:5
   |
 5 |     A()
   |     ^
 
-error: unsupported variant
+error: unsupported variant. It only supports unit variant
   --> tests/failed/04-unsupported-variant.rs:10:5
    |
 10 |     Bar {}

@@ -1,4 +1,4 @@
-error: unsupported derive
+error: unsupported derive. It only supports `Clone`, `Copy`, `PartialEq`, `Eq`, `PartialOrd`, `Ord`, `Hash`, `Default`, `Debug`.
  --> tests/failed/02-unsupported-derive.rs:4:10
   |
 4 | #[derive(Shit)]

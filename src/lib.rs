@@ -162,12 +162,15 @@ fn repr_derive(
                     return Ok(());
                 }
 
-                Err(meta.error("unsupported derive"))
+                Err(meta.error("unsupported derive. It only supports `Clone`, `Copy`, `PartialEq`, `Eq`, `PartialOrd`, `Ord`, `Hash`, `Default`, `Debug`."))
             })?;
             continue;
         }
 
-        return Err(syn::Error::new(attr.span(), "unsupported attribute"));
+        return Err(syn::Error::new(
+            attr.span(),
+            "unsupported attribute. It only supports `#[repr]` and `#[derive]`",
+        ));
     }
 
     Ok((reprs, derives, derive_debug, derive_default))
@@ -229,7 +232,10 @@ fn variants(
     for v in enum_variants {
         // 仅支持unit-like enum
         if !matches!(v.fields, syn::Fields::Unit) {
-            return Err(syn::Error::new(v.span(), "unsupported variant"));
+            return Err(syn::Error::new(
+                v.span(),
+                "unsupported variant. It only supports unit variant",
+            ));
         }
 
         // cfg会最先展开，但会把attribute留在上面
