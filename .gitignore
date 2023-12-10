@@ -2,3 +2,5 @@
 **/*.rs.bk
 /wip
 Cargo.lock
+/.idea
+/.vscode
