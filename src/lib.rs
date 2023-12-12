@@ -86,7 +86,7 @@ fn structify_impl(r#enum: syn::ItemEnum) -> syn::Result<TokenStream> {
 
     let struct_item = structify_type(&reprs, &derives, &vis, &enum_name, &repr_ty);
     let inherent_impl = inherent_impl(&enum_name, &repr_ty, &variant_values);
-    let from_impl = from_impl(&enum_name, &repr_ty);
+    let from_impl = from_impl(&enum_name, &repr_ty, &variant_values);
     let phantom_enum = phantom_enum(enum_clone);
 
     struct_item.to_tokens(&mut token_stream);
@@ -275,6 +275,7 @@ fn structify_type(
     parse_quote! {
         #(#[repr(#reprs)])*
         #(#[derive(#derives)])*
+        #[derive(PartialEq,Eq)]
         #vis struct #enum_name(#repr_ty);
     }
 }
@@ -346,8 +347,40 @@ fn default_impl(enum_name: &syn::Ident, default_value: &syn::Expr) -> syn::ItemI
     }
 }
 
-fn from_impl(enum_name: &syn::Ident, repr_ty: &syn::Path) -> TokenStream {
+fn from_impl(
+    enum_name: &syn::Ident,
+    repr_ty: &syn::Path,
+    variant_values: &HashMap<syn::Ident, syn::Expr>,
+) -> TokenStream {
+    let str_to_value_variants = variant_values.iter().map(|(v_name, _value)| {
+        quote! {
+            stringify!(#v_name) => Ok(#enum_name::#v_name),
+        }
+    });
+    let value_to_str_conversions = variant_values.iter().map(|(v_name, _value)| {
+        quote! {
+            #enum_name::#v_name => Ok(stringify!(#v_name).to_string()),
+        }
+    });
+    let error_enum_name = syn::Ident::new(&format!("{}ParseError",enum_name),enum_name.span());
     quote! {
+        #[derive(Debug)]
+        pub enum #error_enum_name{
+            UnrecognizedValue(#repr_ty),
+            UnrecognizedString(String),
+        }
+
+        impl ::std::error::Error for #error_enum_name {}
+
+        impl ::std::fmt::Display for #error_enum_name {
+            fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+                match self {
+                    #error_enum_name::UnrecognizedValue(v) => write!(f, "{} Parse Unrecognized value: {}", stringify!(#error_enum_name), v),
+                    #error_enum_name::UnrecognizedString(s) => write!(f, "{} Parse Unrecognized string: {}", stringify!(#error_enum_name), s),
+                }
+            }
+        }
+
         impl ::core::convert::From<#repr_ty> for #enum_name {
             fn from(value: #repr_ty) -> Self {
                 Self(value)
@@ -357,6 +390,26 @@ fn from_impl(enum_name: &syn::Ident, repr_ty: &syn::Path) -> TokenStream {
         impl ::core::convert::From<#enum_name> for #repr_ty {
             fn from(value: #enum_name) -> Self {
                 value.0
+            }
+        }
+
+        impl ::core::convert::TryFrom<#enum_name> for String {
+            type Error = #error_enum_name;
+            fn try_from(value: #enum_name) -> ::std::result::Result<String, Self::Error> {
+                match value {
+                    #(#value_to_str_conversions)*
+                    _ => Err(#error_enum_name::UnrecognizedValue(value.0))
+                }
+            }
+        }
+
+        impl ::core::convert::TryFrom<String> for #enum_name {
+            type Error = #error_enum_name;
+            fn try_from(value: String) -> ::std::result::Result<#enum_name, Self::Error> {
+                match value.as_str() {
+                    #(#str_to_value_variants)*
+                    _ => Err(#error_enum_name::UnrecognizedString(value))
+                }
             }
         }
     }
